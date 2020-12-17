@@ -663,6 +663,7 @@ class Dataset:
 
         return my_transform(ds)
 <<<<<<< HEAD
+<<<<<<< HEAD
      
 =======
 
@@ -707,6 +708,9 @@ class Dataset:
         
         return ds,labels       
 >>>>>>> 75f29c1... added a static method from_directory
+=======
+     
+>>>>>>> de97963... chnaged
 
     @staticmethod
     def from_tfds(dataset, split=None, num=-1, sampling_amount=1):
