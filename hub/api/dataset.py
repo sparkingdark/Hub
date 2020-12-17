@@ -676,7 +676,6 @@ class Dataset:
         return my_transform(ds)
 
     @staticmethod
-<<<<<<< HEAD
     def from_tfds(
         dataset,
         split=None,
@@ -687,7 +686,6 @@ class Dataset:
     ):
         """| Converts a TFDS Dataset into hub format.
 
-=======
     def from_directory(url=None,path_to_dir=None,image_shape=(None,None),ds_size=(None,),max_shape=(None,None,4)):
 
         def make_schema(path_to_dir,shape=image_shape):
@@ -712,7 +710,6 @@ class Dataset:
     @staticmethod
     def from_tfds(dataset, split=None, num=-1, sampling_amount=1):
         """Converts a TFDS Dataset into hub format
->>>>>>> a6c0f57... schema generation success
         Parameters
         ----------
         dataset: str
