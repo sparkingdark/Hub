@@ -54,7 +54,7 @@ from hub.schema import Audio, BBox, ClassLabel, Image, Sequence, Text, Video
 from hub.numcodecs import PngCodec
 
 from hub.utils import norm_cache, norm_shape
-from hub import defaults
+from hub import defaults,transform
 
 
 def get_file_count(fs: fsspec.AbstractFileSystem, path):
@@ -1093,6 +1093,45 @@ class Dataset:
 
         return my_transform(dataset)
 
+    @staticmethod
+    def from_csv(path_to_csv):
+        if "pandas" not in sys.modules:
+            raise ModuleNotInstalledException("pandas")
+        else:
+            import pandas as pd
+
+            global pd
+
+        df = pd.read_csv(path_to_csv)
+        all_columns = list(zip(list(df.columns),list(df.dtypes)))
+        
+        print(all_columns)
+
+        def generate_schema(all_columns):
+            schema_dict = dict()
+
+            if len(all_columns)==0:
+               print("empty list")
+            else:
+                for frame in all_columns:
+                    schema_dict[frame[0]] = Primitive(dtype=str(frame[1]))
+            print(schema)
+            return schema_dict            
+        
+        schema = generate_schema(all_columns)
+        
+        from hub import transform
+
+        @transform(schema=schema)
+        def load_transform(name,dataset_iter):
+            return {
+                name:dataset_iter
+            }
+
+        numpy_arr = df.to_numpy()
+        ds = load_transform(list(df.columns),numpy_arr)
+
+        return ds
 
 class TorchDataset:
     def __init__(
