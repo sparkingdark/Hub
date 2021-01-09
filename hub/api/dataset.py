@@ -1119,8 +1119,6 @@ class Dataset:
             return schema_dict            
         
         schema = generate_schema(all_columns)
-        
-        from hub import transform
 
         @transform(schema=schema)
         def load_transform(name,dataset_iter):
