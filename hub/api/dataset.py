@@ -1116,7 +1116,7 @@ class Dataset:
             global pd
 
         df = pd.read_csv(path_to_csv)
-        all_columns = list(df.columns)[0].split(";")        
+        all_columns = df.columns.tolist()       
 
         def generate_schema(df,all_columns):
             schema_dict = dict()
@@ -1125,7 +1125,7 @@ class Dataset:
                print("empty list")
             else:
                 for frame in all_columns:
-                    schema_dict[frame] = Primitive(dtype=str(df[frame].dtype))
+                    schema_dict[frame] = Primitive(dtype=df[[frame]].dtypes)
             print(schema_dict)
             return schema_dict            
         
@@ -1138,8 +1138,8 @@ class Dataset:
             }
         all_columns = []
         for i in list(df.columns):
-            all_columns.append(df[f"{i}"])
-        ds = load_transform(zip(list(df.columns),all_columns))
+            all_columns.append(df[[i]])
+        ds = load_transform(zip(df.columns.tolist(),all_columns))
 
         return ds
 
