@@ -1,4 +1,5 @@
 import collections.abc as abc
+from shutil import Error
 from hub.schema.features import Shape
 import json
 import math
@@ -18,13 +19,6 @@ from hub.exceptions import (
     DynamicTensorShapeException,
 )
 from hub.schema.sequence import Sequence
-
-
-def _tuple_product(tuple_):
-    res = 1
-    for t in tuple_:
-        res *= t
-    return res
 
 
 class DynamicTensor:
@@ -462,15 +456,6 @@ class DynamicTensor:
                     del self[".".join((sample,) + index)]
                 except KeyError:
                     pass
-
-    # FIXME I don't see this class being used anywhere
-    @classmethod
-    def _get_slice_upper_boundary(cls, slice_):
-        if isinstance(slice_, slice):
-            return slice_.stop
-        else:
-            assert isinstance(slice_, int)
-            return slice_ + 1
 
     @property
     def chunksize(self):

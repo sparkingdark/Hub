@@ -20,9 +20,10 @@ from hub.schema.features import (
     featurify,
 )
 from hub.log import logger
+import hub.store.pickle_s3_storage
 
-from hub.api.objectview import ObjectView, DatasetView
-from hub.api.tensorview import TensorView
+from hub.api.datasetview import DatasetView, ObjectView, TensorView
+
 from hub.api.dataset_utils import (
     create_numpy_dict,
     get_value,
@@ -235,15 +236,12 @@ class Dataset:
         return self._meta_information
 
     def _store_meta(self) -> dict:
-
         meta = {
             "shape": self._shape,
             "schema": hub.schema.serialize.serialize(self._schema),
             "version": 1,
+            "meta_info": self._meta_information or dict(),
         }
-
-        if self._meta_information != None:
-            meta["meta_info"] = self._meta_information
 
         self._fs_map["meta.json"] = bytes(json.dumps(meta), "utf-8")
         return meta
@@ -264,7 +262,13 @@ class Dataset:
                     fs.listdir(path)
                 except:
                     raise WrongUsernameException(stored_username)
-        exist_meta = fs.exists(posixpath.join(path, "meta.json"))
+        meta_path = posixpath.join(path, "meta.json")
+        try:
+            # Update boto3 cache
+            fs.ls(path, detail=False, refresh=True)
+        except Exception:
+            pass
+        exist_meta = fs.exists(meta_path)
         if exist_meta:
             if "w" in mode:
                 fs.rm(path, recursive=True)
@@ -369,7 +373,7 @@ class Dataset:
         if not subpath:
             if len(slice_list) > 1:
                 raise ValueError(
-                    "Can't slice a dataset with multiple slices without subpath"
+                    "Can't slice a dataset with multiple slices without key"
                 )
             num, ofs = slice_extract_info(slice_list[0], self._shape[0])
             return DatasetView(
@@ -380,7 +384,7 @@ class Dataset:
                 lazy=self.lazy,
             )
         elif not slice_list:
-            if subpath in self._tensors.keys():
+            if subpath in self.keys:
                 tensorview = TensorView(
                     dataset=self,
                     subpath=subpath,
@@ -391,7 +395,7 @@ class Dataset:
                     return tensorview
                 else:
                     return tensorview.compute()
-            for key in self._tensors.keys():
+            for key in self.keys:
                 if subpath.startswith(key):
                     objectview = ObjectView(
                         dataset=self, subpath=subpath, lazy=self.lazy
@@ -404,7 +408,7 @@ class Dataset:
         else:
             num, ofs = slice_extract_info(slice_list[0], self.shape[0])
             schema_obj = self.schema.dict_[subpath.split("/")[1]]
-            if subpath in self._tensors.keys() and (
+            if subpath in self.keys and (
                 not isinstance(schema_obj, Sequence) or len(slice_list) <= 1
             ):
                 tensorview = TensorView(
@@ -414,7 +418,7 @@ class Dataset:
                     return tensorview
                 else:
                     return tensorview.compute()
-            for key in self._tensors.keys():
+            for key in self.keys:
                 if subpath.startswith(key):
                     objectview = ObjectView(
                         dataset=self,
@@ -448,14 +452,14 @@ class Dataset:
         subpath, slice_list = slice_split(slice_)
 
         if not subpath:
-            raise ValueError("Can't assign to dataset sliced without subpath")
+            raise ValueError("Can't assign to dataset sliced without key")
         elif not slice_list:
-            if subpath in self._tensors.keys():
+            if subpath in self.keys:
                 self._tensors[subpath][:] = assign_value  # Add path check
             else:
                 ObjectView(dataset=self, subpath=subpath)[:] = assign_value
         else:
-            if subpath in self._tensors.keys():
+            if subpath in self.keys:
                 self._tensors[subpath][slice_list] = assign_value
             else:
                 ObjectView(dataset=self, subpath=subpath, slice_list=slice_list)[
@@ -515,13 +519,14 @@ class Dataset:
         num_samples: int, optional
             The number of samples required of the dataset that needs to be converted
         """
-        if "torch" not in sys.modules:
+        try:
+            import torch
+        except ModuleNotFoundError:
             raise ModuleNotInstalledException("torch")
-        import torch
 
         global torch
-
-        self.flush()  # FIXME Without this some tests in test_converters.py fails, not clear why
+        if "r" not in self.mode:
+            self.flush()  # FIXME Without this some tests in test_converters.py fails, not clear why
         return TorchDataset(
             self,
             transform,
@@ -554,7 +559,7 @@ class Dataset:
         def tf_gen():
             for index in range(offset, offset + num_samples):
                 d = {}
-                for key in self._tensors.keys():
+                for key in self.keys:
                     split_key = key.split("/")
                     cur = d
                     for i in range(1, len(split_key) - 1):
@@ -610,7 +615,7 @@ class Dataset:
         """Gets dictionary from dataset given incomplete subpath"""
         tensor_dict = {}
         subpath = subpath if subpath.endswith("/") else subpath + "/"
-        for key in self._tensors.keys():
+        for key in self.keys:
             if key.startswith(subpath):
                 suffix_key = key[len(subpath) :]
                 split_key = suffix_key.split("/")
@@ -643,12 +648,19 @@ class Dataset:
     def enable_lazy(self):
         self.lazy = True
 
+    def _save_meta(self):
+        _meta = json.loads(self._fs_map["meta.json"])
+        _meta["meta_info"] = self._meta_information
+        self._fs_map["meta.json"] = json.dumps(_meta).encode("utf-8")
+
     def flush(self):
         """Save changes from cache to dataset final storage.
         Does not invalidate this object.
         """
+
         for t in self._tensors.values():
             t.flush()
+        self._save_meta()
         self._fs_map.flush()
         self._update_dataset_state()
 
@@ -660,6 +672,7 @@ class Dataset:
         """Save changes from cache to dataset final storage.
         This invalidates this object.
         """
+        self.flush()
         for t in self._tensors.values():
             t.close()
         self._fs_map.close()
