@@ -15,9 +15,6 @@ import hub.api.dataset as dataset
 from hub.schema import Tensor, Text, Image, Sequence, BBox, SchemaDict, ClassLabel
 
 
-
-
-
 from hub.utils import (
     gcp_creds_exist,
     hub_creds_exist,
@@ -585,7 +582,7 @@ def test_meta_information():
     for i, text in enumerate(some_text):
         ds["text", i] = text
 
-    assert type(ds.meta["meta_info"]) == dict
+    assert isinstance(ds.meta["meta_info"], dict)
     assert ds.meta["meta_info"]["author"] == "testing"
     assert ds.meta["meta_info"]["description"] == "here goes the testing text"
 

@@ -1177,10 +1177,8 @@ class Dataset:
         scheduler: str = "single",
         workers: int = 1,
     ):
-
         """|  This utility function is specific to create dataset from the categorical image dataset.User supply the
               path to the image directory and give you the hub dataset  object in return.
-        """|  This utility function is specific to create dataset from the categorical image dataset.
 
         Parameters
         --------
@@ -1216,18 +1214,13 @@ class Dataset:
             -------
             return the maximum shape of the image
 
-            -------
-
-            """
+            -------"""
             try:
 
                 for i in os.listdir(path_to_dir):
                     for j in os.listdir(os.path.join(path_to_dir, i)):
 
                         if j.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")):
-
-
-                        if j.endswith((".png", ".jpg", ".jpeg")):
 
                             img_path = os.path.join(path_to_dir, i, j)
                         else:
@@ -1286,7 +1279,7 @@ class Dataset:
             """| make_schema internal function to generate the schema internally."""
             max_shape = get_max_shape(path_to_dir)
             image_shape = (None, None, None)
-            if labels == None:
+            if labels is None:
 
                 labels = ClassLabel(names=os.listdir(path_to_dir))
             else:
@@ -1306,9 +1299,6 @@ class Dataset:
 
         if labels is not None:
 
-        if labels != None:
-
-
             label_dic = {}
             for i, label in enumerate(labels):
                 label_dic[label] = i
@@ -1320,7 +1310,6 @@ class Dataset:
 
         @hub.transform(schema=schema, scheduler=scheduler, workers=workers)
         def upload_data(sample):
-
             """| This upload_data function is for upload the images internally using `hub.transform`.
             | read and compute the image in hub data format and store to a ds.
             --------
