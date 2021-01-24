@@ -278,7 +278,7 @@ class Dataset:
             if stored_username != current_username:
                 try:
                     fs.listdir(path)
-                except:
+                except BaseException:
                     raise WrongUsernameException(stored_username)
         meta_path = posixpath.join(path, "meta.json")
         try:
@@ -781,7 +781,7 @@ class Dataset:
                 path = posixpath.join(self._path, "mode_test")
                 fs.pipe(path, bytes_)
                 fs.rm(path)
-            except:
+            except BaseException:
                 return "r"
             return "a"
 
@@ -1177,7 +1177,8 @@ class Dataset:
         scheduler: str = "single",
         workers: int = 1,
     ):
-        """|  This utility function is specific to create dataset from the categorical image dataset.
+        """|  This utility function is specific to create dataset from the categorical image dataset.User supply the
+              path to the image directory and give you the hub dataset  object in return.
         Parameters
         --------
             path_to_dir:str
@@ -1219,8 +1220,7 @@ class Dataset:
 
                 for i in os.listdir(path_to_dir):
                     for j in os.listdir(os.path.join(path_to_dir, i)):
-
-                        if j.endswith((".png", ".jpg", ".jpeg")):
+                        if j.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")):
                             img_path = os.path.join(path_to_dir, i, j)
                         else:
                             print(
@@ -1250,13 +1250,26 @@ class Dataset:
                 max_shape = [max(width), max(height), max(mode)]
                 return max_shape
             except Exception:
-                print("some exception happened")
+                print("Your data has some problem,fix that to run again.")
 
         def make_schema(path_to_dir, labels, dtype):
-            """| make_schema internal function to generate the schema internally."""
+            """| make_schema is a  internal function to generate the schema for the hub usage internally.
+            ---------
+            params
+            ---------
+
+            path_to_dir:str
+            labels:List containing class
+            dtype:str
+
+            ---------
+
+            return schema
+
+            """
             max_shape = get_max_shape(path_to_dir)
             image_shape = (None, None, None)
-            if labels == None:
+            if labels is None:
                 labels = ClassLabel(names=os.listdir(path_to_dir))
             else:
                 labels = ClassLabel(labels)
@@ -1273,7 +1286,7 @@ class Dataset:
 
         schema = make_schema(path_to_dir, labels, dtype)
 
-        if labels != None:
+        if labels is not None:
 
             label_dic = {}
             for i, label in enumerate(labels):
@@ -1286,7 +1299,16 @@ class Dataset:
 
         @hub.transform(schema=schema, scheduler=scheduler, workers=workers)
         def upload_data(sample):
-            """| This upload_data function is for upload the images internally using `hub.transform`."""
+            """| This upload_data function is for upload the images internally using `hub.transform`.
+            | read and compute the image in hub data format and store to a ds.
+            --------
+            params
+            --------
+            sample:tuple containing image path and image label.
+            --------
+
+
+            """
             path_to_image = sample[1]
 
             pre_image = im.open(path_to_image)
@@ -1392,7 +1414,7 @@ class TorchDataset:
                     t = torch.tensor(t)
                 cur[split_key[-1]] = t
         d = self._do_transform(d)
-        if self.inplace & (self.output_type != dict) & (type(d) == dict):
+        if self.inplace & (self.output_type != dict) & (isinstance(d, dict)):
             d = self.output_type(d.values())
         return d
 

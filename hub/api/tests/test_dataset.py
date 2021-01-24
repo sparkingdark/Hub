@@ -11,11 +11,7 @@ import pytest
 from hub import transform
 from hub import load
 import hub.api.dataset as dataset
-<<<<<<< HEAD
-from hub.schema import Tensor, Text, Image, ClassLabel
-=======
-from hub.schema import Tensor, Text, Image, Sequence, BBox, SchemaDict
->>>>>>> master
+from hub.schema import Tensor, Text, Image, Sequence, BBox, SchemaDict, ClassLabel
 from hub.utils import (
     gcp_creds_exist,
     hub_creds_exist,
@@ -955,28 +951,18 @@ def test_minio_endpoint():
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
 
-=======
->>>>>>> master
     test_dataset_assign_value()
     test_dataset_setting_shape()
     test_datasetview_repr()
     test_datasetview_get_dictionary()
     test_tensorview_slicing()
-<<<<<<< HEAD
     test_dataset_from_directory()
-=======
->>>>>>> master
     test_datasetview_slicing()
     test_dataset()
     test_dataset_batch_write_2()
     test_append_dataset()
-<<<<<<< HEAD
-    test_dataset2()
-=======
     test_dataset_2()
->>>>>>> master
     test_text_dataset()
     test_text_dataset_tokenizer()
     test_dataset_compute()
@@ -985,12 +971,9 @@ if __name__ == "__main__":
     test_dataset_view_lazy()
     test_dataset_hub()
     test_meta_information()
-<<<<<<< HEAD
     # test_pickleability()
-=======
     test_dataset_filtering()
     test_dataset_filtering_2()
->>>>>>> master
     test_pickleability()
     test_dataset_append_and_read()
     test_tensorview_iter()
