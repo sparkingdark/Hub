@@ -1177,8 +1177,11 @@ class Dataset:
         scheduler: str = "single",
         workers: int = 1,
     ):
+
         """|  This utility function is specific to create dataset from the categorical image dataset.User supply the
               path to the image directory and give you the hub dataset  object in return.
+        """|  This utility function is specific to create dataset from the categorical image dataset.
+
         Parameters
         --------
             path_to_dir:str
@@ -1220,7 +1223,12 @@ class Dataset:
 
                 for i in os.listdir(path_to_dir):
                     for j in os.listdir(os.path.join(path_to_dir, i)):
+
                         if j.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")):
+
+
+                        if j.endswith((".png", ".jpg", ".jpeg")):
+
                             img_path = os.path.join(path_to_dir, i, j)
                         else:
                             print(
@@ -1250,6 +1258,7 @@ class Dataset:
                 max_shape = [max(width), max(height), max(mode)]
                 return max_shape
             except Exception:
+
                 print("Your data has some problem,fix that to run again.")
 
         def make_schema(path_to_dir, labels, dtype):
@@ -1270,6 +1279,15 @@ class Dataset:
             max_shape = get_max_shape(path_to_dir)
             image_shape = (None, None, None)
             if labels is None:
+
+                print("some exception happened")
+
+        def make_schema(path_to_dir, labels, dtype):
+            """| make_schema internal function to generate the schema internally."""
+            max_shape = get_max_shape(path_to_dir)
+            image_shape = (None, None, None)
+            if labels == None:
+
                 labels = ClassLabel(names=os.listdir(path_to_dir))
             else:
                 labels = ClassLabel(labels)
@@ -1288,6 +1306,9 @@ class Dataset:
 
         if labels is not None:
 
+        if labels != None:
+
+
             label_dic = {}
             for i, label in enumerate(labels):
                 label_dic[label] = i
@@ -1299,6 +1320,7 @@ class Dataset:
 
         @hub.transform(schema=schema, scheduler=scheduler, workers=workers)
         def upload_data(sample):
+
             """| This upload_data function is for upload the images internally using `hub.transform`.
             | read and compute the image in hub data format and store to a ds.
             --------
@@ -1309,6 +1331,9 @@ class Dataset:
 
 
             """
+
+            """| This upload_data function is for upload the images internally using `hub.transform`."""
+
             path_to_image = sample[1]
 
             pre_image = im.open(path_to_image)
