@@ -1,4 +1,5 @@
 import os
+import glob
 
 import hub
 import numpy as np
@@ -82,3 +83,17 @@ def image_classification(path, scheduler, workers):
         return {"image": img, "label": label}
 
     return upload_data(data)
+
+
+@state.directory_parser(priority=2)
+def extended_image_classification(path,scheduler,workers):
+    if util.get_children(path,only_dirs=True)<3:
+        print("the folder structure is not contain train,test and val folder")
+
+    ds_store = [] 
+
+    for folder in os.listdir(path):
+        ds_store.append(image_classification(os.path.join(path,folder),scheduler=single,workers=2))
+    print(ds_store)
+    return ds_store    
+
